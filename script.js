@@ -5,9 +5,15 @@ const year = document.querySelector('#year');
 
 if (year) year.textContent = new Date().getFullYear();
 
-const onScroll = () => header?.classList.toggle('scrolled', window.scrollY > 24);
-onScroll();
-window.addEventListener('scroll', onScroll, { passive: true });
+const desktopHeader = window.matchMedia('(min-width: 981px)');
+
+const syncHeaderState = () => {
+  header?.classList.toggle('scrolled', desktopHeader.matches && window.scrollY > 24);
+};
+
+syncHeaderState();
+window.addEventListener('scroll', syncHeaderState, { passive: true });
+desktopHeader.addEventListener?.('change', syncHeaderState);
 
 menuButton?.addEventListener('click', () => {
   const isOpen = nav.classList.toggle('open');
