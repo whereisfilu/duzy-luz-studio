@@ -103,14 +103,20 @@
       <p class="eb">Przed / po mixie</p>
       <h2 class="h2" id="h-ab">Usłysz <em>różnicę.</em></h2>
       <div class="ab">
-        <div class="tracks" id="tracks" role="tablist" aria-label="Wybierz numer"></div>
+        <div class="deck" id="deck">
+          <button class="deck-arrow" id="dprev" type="button" aria-label="Poprzedni numer">‹</button>
+          <div class="ring-wrap" id="ringwrap" aria-label="Wybierz numer: przeciągnij płyty w bok albo stuknij płytę"><div class="ring" id="ring"></div></div>
+          <button class="deck-arrow" id="dnext" type="button" aria-label="Następny numer">›</button>
+        </div>
+        <div class="deck-title" aria-live="polite"><small id="dnum">Numer 1 / 3</small><b id="dtitle">Piotr Pisarek</b></div>
         <div class="wave" id="wave" role="slider" tabindex="0" aria-label="Pozycja w utworze" aria-valuemin="0" aria-valuemax="35" aria-valuenow="0"><canvas id="wcv"></canvas></div>
         <div class="abrow"><span id="tcur">0:00</span><span class="abstate" id="abstate">Po mixie</span><span id="tdur">0:35</span></div>
         <div class="abctrl">
           <button class="playb" id="abplay" type="button" aria-label="Odtwórz"><svg viewBox="0 0 24 24" id="abico"><path d="M7 4.5v15l13-7.5z"/></svg></button>
-          <div class="seg" role="group" aria-label="Wersja">
-            <button type="button" id="segB">Przed mixem</button>
-            <button type="button" id="segA" class="sel">Po mixie</button>
+          <div class="xf">
+            <button type="button" class="xl" id="segB">Przed</button>
+            <div class="xf-rail"><input type="range" id="xf" min="0" max="100" value="100" step="1" aria-label="Crossfader: przed mixem – po mixie"></div>
+            <button type="button" class="xl on" id="segA">Po</button>
           </div>
         </div>
         <p class="note">Ten sam fragment numeru w dwóch wersjach. Przełączaj w trakcie słuchania, muzyka gra dalej od tego samego miejsca. Stuknij w falę, żeby przeskoczyć. Najlepiej w słuchawkach.</p>
