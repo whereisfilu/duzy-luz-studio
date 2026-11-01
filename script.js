@@ -215,6 +215,14 @@
   }
   requestAnimationFrame(drawWave);
 
+
+  /* ---------- logo 3D w nagłówku: 72 klatki obrotu, pełny obrót w 4 s ---------- */
+  (() => { const el = $('#logo3d'); if (!el || RM) return; const N = 72, COLS = 9, ROWS = 8, PERIOD = 4000;
+    const im = new Image(); im.onload = () => { el.classList.add('sprite'); requestAnimationFrame(step); }; im.src = 'assets/images/logo-3d-sprite.webp';
+    let last = -1;
+    function step(t) { const f = Math.floor((t % PERIOD) / PERIOD * N); if (f !== last) { last = f; el.style.backgroundPosition = `${(f % COLS) / (COLS - 1) * 100}% ${Math.floor(f / COLS) / (ROWS - 1) * 100}%`; } requestAnimationFrame(step); }
+  })();
+
   /* ---------- kopiuj ---------- */
   $$('.copy').forEach(b => b.addEventListener('click', () => { const okk = () => { b.textContent = 'Skopiowano'; setTimeout(() => b.textContent = 'Kopiuj', 1500); }, sel = () => getSelection().selectAllChildren(b.previousElementSibling);
     navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copy).then(okk).catch(sel) : sel(); }));

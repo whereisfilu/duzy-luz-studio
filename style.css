@@ -30,7 +30,7 @@ a { color: inherit; text-decoration: none; }
 .h2 { font-family: var(--display); font-weight: 400; text-transform: uppercase; line-height: .9; margin: 0; font-size: clamp(3rem, 9vw, 6.4rem); text-wrap: balance; }
 .h2 em { font-style: normal; color: var(--rec); }
 .sec { padding-block: clamp(80px, 11vw, 140px); }
-section[id] { scroll-margin-top: 110px; }
+section[id] { scroll-margin-top: 130px; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--ink); }
 
 /* przyciski */
@@ -97,7 +97,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 /* ---------- NAGŁÓWEK ---------- */
 .hdr { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; z-index: 50; background: rgba(7,7,8,.94); border-bottom: 1px solid var(--line); }
 .hdr-in { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding-block: 10px; }
-.hdr .logo img { height: 44px; width: auto; }
+.hdr .logo { display: block; }
+/* logo 3D: wyrenderowany obrót bryły (72 klatki), kręci się w lewo */
+.logo3d { display: block; height: 96px; aspect-ratio: 246 / 174; background: url("assets/images/logo-3d.webp") center / contain no-repeat; }
+.logo3d.sprite { background-image: url("assets/images/logo-3d-sprite.webp"); background-size: 900% 800%; background-position: 0 0; }
 .hdr nav { display: flex; gap: 26px; justify-content: center; }
 .hdr nav a { font-family: var(--mono); font-size: .72rem; letter-spacing: .14em; text-transform: uppercase; padding: 8px 0; color: rgba(242,241,237,.75); white-space: nowrap; transition: color .2s; }
 .hdr nav a:hover { color: var(--paper); }
@@ -108,7 +111,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .hero-bg { position: absolute; inset: 0; }
 .hero-bg img { width: 100%; height: 100%; object-fit: cover; object-position: 38% 50%; }
 .hero-bg::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(7,7,8,.9), rgba(7,7,8,.35) 70%), linear-gradient(0deg, var(--ink), transparent 50%); }
-.hero .wrap { position: relative; padding-top: 130px; }
+.hero .wrap { position: relative; padding-top: 160px; }
 .hero h1 { font-family: var(--display); font-weight: 400; text-transform: uppercase; line-height: .82; margin: 0; font-size: clamp(4.4rem, 14vw, 11.5rem); }
 .hero h1 span { display: block; }
 .hero h1 .o { color: transparent; -webkit-text-stroke: 2px var(--rec); }
@@ -181,7 +184,7 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; font-famil
 /* ---------- TELEFON ---------- */
 @media (max-width: 860px) {
   .hdr-in { grid-template-columns: auto 1fr; row-gap: 6px; padding-block: 8px 0; }
-  .hdr .logo img { height: 36px; }
+  .logo3d { height: 70px; }
   .hdr .btn { justify-self: end; min-height: 42px; padding: 0 16px; }
   .hdr nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; gap: 20px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--sl) * -1) calc(var(--sr) * -1); padding: 0 var(--sr) 4px var(--sl); }
   .hdr nav::-webkit-scrollbar { display: none; }
