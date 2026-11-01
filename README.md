@@ -1,33 +1,16 @@
 # Duży Luz Studio — strona WWW
 
-Pierwsza działająca wersja strony `duzyluzstudio.pl`.
+Strona `duzyluzstudio.pl`: prosty HTML + CSS + JavaScript, bez frameworków.
+Hosting: Cloudflare Workers (pliki statyczne, ustawienia w `wrangler.jsonc`).
 
 ## Pliki
 - `index.html` — struktura strony
-- `style.css` — cały wygląd i responsywność
-- `script.js` — menu, animacje i przygotowanie playera A/B
-- `assets/images/` — zoptymalizowane zdjęcia i logo
-- `assets/audio/` — tu później dodamy `before.mp3` i `after.mp3`
+- `style.css` — wygląd i wersja na telefon
+- `script.js` — intro (REC → 4 uderzenia), licznik cen, odtwarzacz przed/po
+- `assets/images/` — zdjęcia studia, logo, favicon, obrazek do udostępnień (`og.jpg`)
+- `assets/audio/` — fragmenty numerów przed i po mixie (MP3)
 
-## Jak wrzucić na GitHub
-W repozytorium `duzy-luz-studio` wybierz **uploading an existing file**, przeciągnij całą zawartość tego folderu i zatwierdź commit.
-
-Ważne: pliki `index.html`, `style.css` i `script.js` mają leżeć w głównym katalogu repo, nie w dodatkowym folderze `duzy-luz-studio/duzy-luz-studio`.
-
-## Audio Before / After
-Po otrzymaniu audio:
-1. dodaj `assets/audio/before.mp3`
-2. dodaj `assets/audio/after.mp3`
-3. w `script.js` zmień:
-
-```js
-const audioReady = false;
-```
-
-na:
-
-```js
-const audioReady = true;
-```
-
-Player będzie przełączał obie wersje w tym samym momencie utworu.
+## Odtwarzacz przed / po
+Numery są zdefiniowane na liście `TRACKS` w `script.js`. Każdy ma dwa pliki
+(`…-przed.mp3` i `…-po.mp3`), które muszą zaczynać się w tym samym momencie utworu.
+Żeby dodać numer: wrzuć dwa pliki do `assets/audio/` i dopisz wiersz na liście `TRACKS`.
