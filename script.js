@@ -97,24 +97,40 @@
   const shake = () => { if (RM) return; fxw.classList.remove('shake'); void fxw.offsetWidth; fxw.classList.add('shake'); };
   function cutTo(i) { reelImgs.forEach(m => m.classList.remove('on')); const m = reelImgs[i]; m.style.setProperty('--dx', i % 2 ? '-3%' : '3%'); void m.offsetWidth; m.classList.add('on'); }
   let running = false;
+  // dźwięk intro: sampel „drum fill + scratch” (96 BPM, 4 uderzenia co 0,3125 s)
+  const INTRO_HITS = [0, .3125, .625, .9375];
+  const introData = fetch('assets/audio/intro.mp3').then(r => r.arrayBuffer()).catch(() => null);
+  let introBuf = null;
+  async function getIntroBuf() {
+    if (introBuf) return introBuf; const data = await introData; if (!data) return null;
+    try { introBuf = await new Promise((res, rej) => ac.decodeAudioData(data.slice(0), res, rej)); } catch (_) { return null; }
+    // przesunięcie na początku pliku (cisza po kompresji), żeby obraz trafiał równo w uderzenia
+    const d = introBuf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < .02) i++; introBuf.lead = i / introBuf.sampleRate;
+    return introBuf;
+  }
   async function intro() {
     if (running) return; running = true; tcOn = false;
     tap.classList.add('hide');
+    const buf = ac ? await getIntroBuf() : null;
+    let t0 = performance.now() + 60;
+    if (buf && ac.state === 'running') { const src = ac.createBufferSource(); src.buffer = buf; src.connect(out); const at = ac.currentTime + .06; src.start(at); t0 = performance.now() + 60 + buf.lead * 1000; }
+    const until = s => wait(Math.max(0, t0 + s * 1000 - performance.now()));
     if (!RM) for (let i = 0; i < 3; i++) {
-      // uderzenia 1, 2, 3: zdjęcie + cyfra + kick
+      // uderzenia 1, 2, 3: zdjęcie + cyfra
+      await until(INTRO_HITS[i]);
       cutTo(i); cnt.textContent = i + 1; cnt.classList.remove('slam'); void cnt.offsetWidth; cnt.classList.add('slam');
       if (i % 2 === 0) fx($('#flash'));
-      shake(); play('scratch', i);
-      await wait(BEAT * 1000);
+      shake();
     }
-    // uderzenie 4: od razu napis, tylko kick
+    // uderzenie 4: napis (bez dodatkowych dźwięków)
+    await until(RM ? 0 : INTRO_HITS[3]);
     cutTo(3); cnt.classList.remove('slam'); cnt.textContent = '';
-    words.forEach(w => w.classList.add('in')); fx($('#flash')); shake(); play('hit4');
-    await wait(RM ? 300 : 1300);
+    words.forEach(w => w.classList.add('in')); fx($('#flash')); shake();
+    await wait(RM ? 300 : 1400);
     gate.classList.add('gone'); document.body.classList.remove('locked');
     running = false;
   }
-  tap.addEventListener('click', () => { initAudio(); try { scrRender('baby'); scrRender('final'); } catch (_) {} ac.resume().finally(() => intro()); });
+  tap.addEventListener('click', () => { initAudio(); ac.resume().finally(() => intro()); });
 
 
   /* ---------- ceny: wbijają się w rytm ---------- */
