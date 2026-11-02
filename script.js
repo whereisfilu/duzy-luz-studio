@@ -268,6 +268,6 @@
   })();
 
   /* ---------- kopiuj ---------- */
-  $$('.copy').forEach(b => b.addEventListener('click', () => { const okk = () => { b.textContent = 'Skopiowano'; setTimeout(() => b.textContent = 'Kopiuj', 1500); }, sel = () => getSelection().selectAllChildren(b.previousElementSibling);
+  $$('.copy[data-copy]').forEach(b => b.addEventListener('click', () => { const okk = () => { b.textContent = 'Skopiowano'; setTimeout(() => b.textContent = 'Kopiuj', 1500); }, sel = () => getSelection().selectAllChildren(b.previousElementSibling);
     navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copy).then(okk).catch(sel) : sel(); }));
 })();
