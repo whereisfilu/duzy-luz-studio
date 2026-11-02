@@ -211,21 +211,36 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; font-famil
 
 /* ---------- TELEFON ---------- */
 @media (max-width: 860px) {
-  .hdr-in { grid-template-columns: auto 1fr; row-gap: 6px; padding-block: 8px 0; }
-  .logo3d { height: 70px; }
+  section[id] { scroll-margin-top: 104px; }
+  .hdr-in { grid-template-columns: auto 1fr; row-gap: 2px; padding-block: 6px 0; }
+  .logo3d { height: 52px; }
   .hdr .btn { justify-self: end; min-height: 42px; padding: 0 16px; }
   .hdr nav { grid-column: 1 / -1; grid-row: 2; justify-content: flex-start; gap: 20px; overflow-x: auto; scrollbar-width: none; margin-inline: calc(var(--sl) * -1) calc(var(--sr) * -1); padding: 0 var(--sr) 4px var(--sl); }
   .hdr nav::-webkit-scrollbar { display: none; }
+  .hdr nav a { font-size: .76rem; padding: 10px 0; color: rgba(242,241,237,.9); }
   .hero { min-height: 88svh; padding-bottom: 36px; }
-  .hero .wrap { padding-top: 150px; }
+  .hero .wrap { padding-top: 130px; }
   .hero-bg img { object-position: 30% 50%; }
   .hero-bg::after { background: linear-gradient(0deg, var(--ink) 18%, rgba(7,7,8,.6) 60%, rgba(7,7,8,.35)); }
   .split, .contact { grid-template-columns: 1fr; }
   .pr { padding-inline: 4px; }
+  .pr .n small { line-height: 1.3; }
+  .pr .alt { font-size: .8rem; color: var(--paper); opacity: .85; }
   .cl { grid-template-columns: minmax(0, 1fr) auto; }
   .cl span { grid-column: 1 / -1; }
-  .ring-wrap { height: 170px; } .disc { left: -70px; top: -70px; width: 140px; height: 140px; } .deck-arrow { width: 38px; height: 38px; }
-  .xl { padding: 9px 10px; }
+  /* odtwarzacz: mniejsze płyty i fala, żeby play i PRZED / PO były od razu na ekranie */
+  .ab { gap: 12px; padding: 14px; margin-top: 22px; }
+  .ring-wrap { height: 128px; } .disc { left: -52px; top: -52px; width: 104px; height: 104px; } .deck-arrow { width: 38px; height: 38px; }
+  .disc:not(.cur) .vin span { display: none; }
+  .disc .vin span { font-size: .7rem; }
+  .deck-title { margin-top: -4px; }
+  .wave { height: 84px; }
+  .abrow { font-size: .78rem; }
+  .abctrl { flex-wrap: nowrap; }
+  .xf { gap: 8px; }
+  .xl { min-height: 44px; padding: 0 14px; font-size: .72rem; }
+  .note { font-size: .86rem; }
+  .tap.ask .tap-txt { border-color: rgba(242,241,237,.7); font-size: .88rem; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } html { scroll-behavior: auto; } }
 
