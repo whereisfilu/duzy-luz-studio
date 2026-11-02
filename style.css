@@ -227,3 +227,9 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; font-famil
   .xl { padding: 9px 10px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } html { scroll-behavior: auto; } }
+
+/* link do mapy przy adresie */
+.maplink { color: inherit; border-bottom: 1px solid rgba(255,45,145,.5); transition: color .2s, border-color .2s; }
+.maplink:hover { color: var(--paper); border-color: var(--rec); }
+a.copy { display: inline-flex; align-items: center; text-decoration: none; }
+a.copy:hover { color: #fff; border-color: var(--rec); }
