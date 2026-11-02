@@ -261,7 +261,7 @@
 
 
   /* ---------- logo 3D w nagłówku: 72 klatki obrotu, pełny obrót w 4 s ---------- */
-  // to samo logo kręci się w rogu i wpada na koniec intro
+  // logo 3D w rogu: obrót z klatek
   (() => { const els = $$('.logo3d'); if (!els.length || RM) return; const N = 72, COLS = 9, ROWS = 8, PERIOD = 4000;
     const im = new Image(); im.onload = () => { els.forEach(el => el.classList.add('sprite')); requestAnimationFrame(step); }; im.src = 'assets/images/logo-3d-sprite.webp';
     let last = -1;
