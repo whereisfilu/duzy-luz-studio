@@ -122,7 +122,7 @@
       if (i % 2 === 0) fx($('#flash'));
       shake();
     }
-    // uderzenie 4: napis (bez dodatkowych dźwięków)
+    // uderzenie 4: chromowane logo 3D (bez dodatkowych dźwięków)
     await until(RM ? 0 : INTRO_HITS[3]);
     cutTo(3); cnt.classList.remove('slam'); cnt.textContent = '';
     words.forEach(w => w.classList.add('in')); fx($('#flash')); shake();
@@ -261,10 +261,11 @@
 
 
   /* ---------- logo 3D w nagłówku: 72 klatki obrotu, pełny obrót w 4 s ---------- */
-  (() => { const el = $('#logo3d'); if (!el || RM) return; const N = 72, COLS = 9, ROWS = 8, PERIOD = 4000;
-    const im = new Image(); im.onload = () => { el.classList.add('sprite'); requestAnimationFrame(step); }; im.src = 'assets/images/logo-3d-sprite.webp';
+  // to samo logo kręci się w rogu i wpada na koniec intro
+  (() => { const els = $$('.logo3d'); if (!els.length || RM) return; const N = 72, COLS = 9, ROWS = 8, PERIOD = 4000;
+    const im = new Image(); im.onload = () => { els.forEach(el => el.classList.add('sprite')); requestAnimationFrame(step); }; im.src = 'assets/images/logo-3d-sprite.webp';
     let last = -1;
-    function step(t) { const f = Math.floor((t % PERIOD) / PERIOD * N); if (f !== last) { last = f; el.style.backgroundPosition = `${(f % COLS) / (COLS - 1) * 100}% ${Math.floor(f / COLS) / (ROWS - 1) * 100}%`; } requestAnimationFrame(step); }
+    function step(t) { const f = Math.floor((t % PERIOD) / PERIOD * N); if (f !== last) { last = f; const pos = `${(f % COLS) / (COLS - 1) * 100}% ${Math.floor(f / COLS) / (ROWS - 1) * 100}%`; els.forEach(el => el.style.backgroundPosition = pos); } requestAnimationFrame(step); }
   })();
 
   /* ---------- kopiuj ---------- */
