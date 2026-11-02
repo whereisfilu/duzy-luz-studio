@@ -38,7 +38,7 @@
     </div>
     <div class="count"><div class="cnt" id="cnt"></div></div>
     <div class="fin" id="fin" aria-hidden="true">
-      <span class="w">Duży</span><span class="w">Luz</span><span class="w pink">Studio</span>
+      <img class="fin-logo w" src="assets/images/logo-hd.webp" alt="Duży Luz Studio" width="885" height="700" decoding="async">
     </div>
   </div>
 </div>
@@ -46,7 +46,7 @@
 
 <header class="hdr">
   <div class="wrap hdr-in">
-    <a class="logo" href="#top" aria-label="Duży Luz Studio, początek strony"><img src="assets/images/logo-chrome.webp" alt="Duży Luz Studio" width="560" height="443"></a>
+    <a class="logo" href="#top" aria-label="Duży Luz Studio, początek strony"><span class="logo3d" id="logo3d" role="img" aria-label="Duży Luz Studio"></span></a>
     <nav aria-label="Sekcje">
       <a href="#studio">Studio</a>
       <a href="#oferta">Oferta</a>
@@ -68,7 +68,6 @@
         <a class="btn" href="#kontakt">Umów sesję →</a>
         <a class="btn ghost" href="#oferta">Zobacz ofertę</a>
       </div>
-      <p class="addr">Poplińskich 10, Poznań</p>
     </div>
   </section>
 
@@ -77,7 +76,10 @@
       <div>
         <p class="eb">Studio</p>
         <h2 class="h2" id="h-studio">Tu numer nabiera <em>charakteru.</em></h2>
-        <p class="p">Duży Luz to miejsce do nagrywania bez zbędnego spięcia. Skupiamy się na wykonaniu i brzmieniu, żeby artysta mógł wejść w numer zamiast walczyć z techniką.</p>
+        <p class="p">Duży Luz to studio nagrań, w którym możesz być sobą i skupić się na muzyce. Jest tu miejsce na pomysły, eksperymenty i kolejne podejścia, aż usłyszysz dokładnie to, co masz w głowie.</p>
+        <h3 class="sub-h">Twoja muzyka. <em>Dobra atmosfera.</em></h3>
+        <p class="p">Pierwszy raz przed mikrofonem? Spokojnie, przeprowadzimy Cię przez wszystko krok po kroku. Masz już na koncie numery? Tym lepiej, szybciej złapiemy wspólny język. Dbamy o brzmienie i o atmosferę, w której po prostu chce się tworzyć.</p>
+        <p class="p-cta">Wpadaj. Nagrajmy coś Twojego.</p>
       </div>
       <figure class="ph"><img src="assets/images/studio-wide.webp" alt="Reżyserka Duży Luz Studio z różową ścianą i klawiaturą" loading="lazy" width="1800" height="1200"><span class="tag">Reżyserka</span></figure>
     </div>
@@ -103,14 +105,20 @@
       <p class="eb">Przed / po mixie</p>
       <h2 class="h2" id="h-ab">Usłysz <em>różnicę.</em></h2>
       <div class="ab">
-        <div class="tracks" id="tracks" role="tablist" aria-label="Wybierz numer"></div>
+        <div class="deck" id="deck">
+          <button class="deck-arrow" id="dprev" type="button" aria-label="Poprzedni numer">‹</button>
+          <div class="ring-wrap" id="ringwrap" aria-label="Wybierz numer: przeciągnij płyty w bok albo stuknij płytę"><div class="ring" id="ring"></div></div>
+          <button class="deck-arrow" id="dnext" type="button" aria-label="Następny numer">›</button>
+        </div>
+        <div class="deck-title" aria-live="polite"><small id="dnum">Numer 1 / 3</small><b id="dtitle">Piotr Pisarek</b></div>
         <div class="wave" id="wave" role="slider" tabindex="0" aria-label="Pozycja w utworze" aria-valuemin="0" aria-valuemax="35" aria-valuenow="0"><canvas id="wcv"></canvas></div>
         <div class="abrow"><span id="tcur">0:00</span><span class="abstate" id="abstate">Po mixie</span><span id="tdur">0:35</span></div>
         <div class="abctrl">
           <button class="playb" id="abplay" type="button" aria-label="Odtwórz"><svg viewBox="0 0 24 24" id="abico"><path d="M7 4.5v15l13-7.5z"/></svg></button>
-          <div class="seg" role="group" aria-label="Wersja">
-            <button type="button" id="segB">Przed mixem</button>
-            <button type="button" id="segA" class="sel">Po mixie</button>
+          <div class="xf">
+            <button type="button" class="xl" id="segB">Przed</button>
+            <div class="xf-rail"><input type="range" id="xf" min="0" max="100" value="100" step="1" aria-label="Crossfader: przed mixem – po mixie"></div>
+            <button type="button" class="xl on" id="segA">Po</button>
           </div>
         </div>
         <p class="note">Ten sam fragment numeru w dwóch wersjach. Przełączaj w trakcie słuchania, muzyka gra dalej od tego samego miejsca. Stuknij w falę, żeby przeskoczyć. Najlepiej w słuchawkach.</p>
@@ -124,16 +132,17 @@
         <p class="eb">Kontakt</p>
         <h2 class="h2" id="h-k">Umów <em>sesję.</em></h2>
         <div class="lines">
-          <div class="cl"><span>Telefon</span><strong>795 587 342</strong><button class="copy" type="button" data-copy="795587342">Kopiuj</button></div>
+          <div class="cl"><span>Telefon</span><strong><a href="tel:+48795587342">795 587 342</a></strong><button class="copy" type="button" data-copy="795587342">Kopiuj</button></div>
+          <div class="cl"><span>Telefon</span><strong><a href="tel:+48533804770">533 804 770</a></strong><button class="copy" type="button" data-copy="533804770">Kopiuj</button></div>
           <div class="cl"><span>E-mail</span><strong>duzyluz.studio@gmail.com</strong><button class="copy" type="button" data-copy="duzyluz.studio@gmail.com">Kopiuj</button></div>
-          <div class="cl"><span>Adres</span><strong>Poplińskich 10, Poznań</strong></div>
+          <div class="cl"><span>Adres</span><strong>Poplińskich 10, Poznań</strong><a class="copy" href="https://maps.app.goo.gl/URhkxDAGt5SWqAML6" target="_blank" rel="noopener">Mapa ↗</a></div>
         </div>
         <div class="acts"><a class="btn" href="https://www.instagram.com/duzyluz.studio/" target="_blank" rel="noopener">Napisz na Instagramie ↗</a></div>
       </div>
       <figure class="ph"><img src="assets/images/kontakt.webp" alt="Strefa wypoczynku w studiu z dużą kanapą" loading="lazy" width="1800" height="1200"><span class="tag">Strefa luzu</span></figure>
     </div>
   </section>
-  <div class="wrap"><footer><span>© Duży Luz Studio · Poznań</span><span>Poplińskich 10 · 795 587 342</span></footer></div>
+  <div class="wrap"><footer><span>© Duży Luz Studio · Poznań</span></footer></div>
 </main>
 
 <script src="script.js"></script>

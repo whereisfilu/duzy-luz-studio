@@ -97,24 +97,40 @@
   const shake = () => { if (RM) return; fxw.classList.remove('shake'); void fxw.offsetWidth; fxw.classList.add('shake'); };
   function cutTo(i) { reelImgs.forEach(m => m.classList.remove('on')); const m = reelImgs[i]; m.style.setProperty('--dx', i % 2 ? '-3%' : '3%'); void m.offsetWidth; m.classList.add('on'); }
   let running = false;
+  // dźwięk intro: sampel „drum fill + scratch” (96 BPM, 4 uderzenia co 0,3125 s)
+  const INTRO_HITS = [0, .3125, .625, .9375];
+  const introData = fetch('assets/audio/intro.mp3').then(r => r.arrayBuffer()).catch(() => null);
+  let introBuf = null;
+  async function getIntroBuf() {
+    if (introBuf) return introBuf; const data = await introData; if (!data) return null;
+    try { introBuf = await new Promise((res, rej) => ac.decodeAudioData(data.slice(0), res, rej)); } catch (_) { return null; }
+    // przesunięcie na początku pliku (cisza po kompresji), żeby obraz trafiał równo w uderzenia
+    const d = introBuf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < .02) i++; introBuf.lead = i / introBuf.sampleRate;
+    return introBuf;
+  }
   async function intro() {
     if (running) return; running = true; tcOn = false;
     tap.classList.add('hide');
+    const buf = ac ? await getIntroBuf() : null;
+    let t0 = performance.now() + 60;
+    if (buf && ac.state === 'running') { const src = ac.createBufferSource(); src.buffer = buf; src.connect(out); const at = ac.currentTime + .06; src.start(at); t0 = performance.now() + 60 + buf.lead * 1000; }
+    const until = s => wait(Math.max(0, t0 + s * 1000 - performance.now()));
     if (!RM) for (let i = 0; i < 3; i++) {
-      // uderzenia 1, 2, 3: zdjęcie + cyfra + kick
+      // uderzenia 1, 2, 3: zdjęcie + cyfra
+      await until(INTRO_HITS[i]);
       cutTo(i); cnt.textContent = i + 1; cnt.classList.remove('slam'); void cnt.offsetWidth; cnt.classList.add('slam');
       if (i % 2 === 0) fx($('#flash'));
-      shake(); play('scratch', i);
-      await wait(BEAT * 1000);
+      shake();
     }
-    // uderzenie 4: od razu napis, tylko kick
+    // uderzenie 4: chromowane logo 3D (bez dodatkowych dźwięków)
+    await until(RM ? 0 : INTRO_HITS[3]);
     cutTo(3); cnt.classList.remove('slam'); cnt.textContent = '';
-    words.forEach(w => w.classList.add('in')); fx($('#flash')); shake(); play('hit4');
-    await wait(RM ? 300 : 1300);
+    words.forEach(w => w.classList.add('in')); fx($('#flash')); shake();
+    await wait(RM ? 300 : 1400);
     gate.classList.add('gone'); document.body.classList.remove('locked');
     running = false;
   }
-  tap.addEventListener('click', () => { initAudio(); try { scrRender('baby'); scrRender('final'); } catch (_) {} ac.resume().finally(() => intro()); });
+  tap.addEventListener('click', () => { initAudio(); ac.resume().finally(() => intro()); });
 
 
   /* ---------- ceny: wbijają się w rytm ---------- */
@@ -147,14 +163,14 @@
     { title: 'Jak chce się płakać', b: 'assets/audio/jak-chce-sie-plakac-przed.mp3', a: 'assets/audio/jak-chce-sie-plakac-po.mp3' },
     { title: 'El Tripero', b: 'assets/audio/el-tripero-przed.mp3', a: 'assets/audio/el-tripero-po.mp3' }
   ];
-  const cache = {}; let trk = 0, gA, gB, srcA, srcB, playing = false, startCtx = 0, offset = 0, abMode = 'A', token = 0;
+  const cache = {}; let trk = 0, gA, gB, srcA, srcB, playing = false, startCtx = 0, offset = 0, abMode = 'A', mix = 1, token = 0;
   const fmt = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
   const stateEl = $('#abstate'), tcur = $('#tcur'), tdur = $('#tdur'), wave = $('#wave'), wcv = $('#wcv'), wx = wcv.getContext('2d');
   const decode = buf => new Promise((res, rej) => ac.decodeAudioData(buf, res, rej));
-  const label = () => abMode === 'A' ? 'Po mixie' : 'Przed mixem';
+  const label = () => mix >= .99 ? 'Po mixie' : mix <= .01 ? 'Przed mixem' : `${Math.round(mix * 100)}% po mixie`;
   function peaks(b, n) { const d = b.getChannelData(0), e = b.numberOfChannels > 1 ? b.getChannelData(1) : d, step = Math.floor(d.length / n), out = [];
     for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step; j += 16) { const v = Math.max(Math.abs(d[j]), Math.abs(e[j])); if (v > m) m = v; } out.push(m); } return out; }
-  function initGains() { if (gA) return; initAudio(); gA = ac.createGain(); gB = ac.createGain(); const m = ac.createGain(); m.gain.value = .9; gA.connect(m); gB.connect(m); m.connect(ac.destination); gA.gain.value = abMode === 'A' ? 1 : 0; gB.gain.value = abMode === 'B' ? 1 : 0; }
+  function initGains() { if (gA) return; initAudio(); gA = ac.createGain(); gB = ac.createGain(); const m = ac.createGain(); m.gain.value = .9; gA.connect(m); gB.connect(m); m.connect(ac.destination); gA.gain.value = Math.sin(mix * Math.PI / 2); gB.gain.value = Math.cos(mix * Math.PI / 2); }
   function load(i) {
     if (cache[i]) return cache[i].p; initGains();
     const T = TRACKS[i], c = cache[i] = {};
@@ -168,30 +184,57 @@
   const cur = () => playing ? Math.min(dur(), ac.currentTime - startCtx) : offset;
   function start(at) {
     const c = T0(); if (!c) return; const my = ++token; srcA = ac.createBufferSource(); srcB = ac.createBufferSource(); srcA.buffer = c.a; srcB.buffer = c.b; srcA.connect(gA); srcB.connect(gB);
-    const t = ac.currentTime + .04; srcA.start(t, at); srcB.start(t, at); startCtx = t - at; playing = true; setIcon();
+    const t = ac.currentTime + .04; srcA.start(t, at); srcB.start(t, at); startCtx = t - at; playing = true; setIcon(); deck.classList.add('playing');
     srcA.onended = () => { if (my === token && playing) { playing = false; offset = 0; setIcon(); } };
   }
   function halt() { token++; try { srcA.stop(); srcB.stop(); } catch (_) {} }
   function pause() { if (!playing) return; offset = cur(); playing = false; halt(); setIcon(); }
   const abBtn = $('#abplay'), ico = $('#abico');
-  function setIcon() { ico.innerHTML = playing ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4.5v15l13-7.5z"/>'; abBtn.setAttribute('aria-label', playing ? 'Pauza' : 'Odtwórz'); }
+  function setIcon() { if (!playing) deck.classList.remove('playing'); ico.innerHTML = playing ? '<path d="M6 4h4v16H6zM14 4h4v16h-4z"/>' : '<path d="M7 4.5v15l13-7.5z"/>'; abBtn.setAttribute('aria-label', playing ? 'Pauza' : 'Odtwórz'); }
   async function playNow() { initGains(); ac.resume(); const want = trk; if (!T0()) stateEl.textContent = 'Ładowanie…'; await load(want); if (want !== trk || !T0()) { if (!T0()) stateEl.textContent = 'Nie udało się wczytać nagrania'; return; } stateEl.textContent = label(); if (offset >= dur() - .05) offset = 0; if (!playing) start(offset); }
   abBtn.addEventListener('click', () => playing ? pause() : playNow());
-  function setAB(m) { abMode = m; $('#segA').classList.toggle('sel', m === 'A'); $('#segB').classList.toggle('sel', m === 'B'); stateEl.textContent = label();
-    if (gA) { gA.gain.setTargetAtTime(m === 'A' ? 1 : 0, ac.currentTime, .015); gB.gain.setTargetAtTime(m === 'B' ? 1 : 0, ac.currentTime, .015); }
-    if (!playing) playNow(); }
-  $('#segA').addEventListener('click', () => setAB('A')); $('#segB').addEventListener('click', () => setAB('B'));
+  // crossfader: równa moc przy przejściu, muzyka gra dalej
+  const xf = $('#xf');
+  function setMix(x, fromUser) { mix = Math.max(0, Math.min(1, x)); abMode = mix >= .5 ? 'A' : 'B';
+    $('#segA').classList.toggle('on', mix >= .5); $('#segB').classList.toggle('on', mix < .5); if (+xf.value !== Math.round(mix * 100)) xf.value = Math.round(mix * 100);
+    if (T0()) stateEl.textContent = label();
+    if (gA) { gA.gain.setTargetAtTime(Math.sin(mix * Math.PI / 2), ac.currentTime, .012); gB.gain.setTargetAtTime(Math.cos(mix * Math.PI / 2), ac.currentTime, .012); }
+    if (fromUser && !playing) playNow(); }
+  let glideRaf; function glide(to) { cancelAnimationFrame(glideRaf); const from = mix, s0 = performance.now();
+    const go = n => { const k = Math.min(1, (n - s0) / 320); setMix(from + (to - from) * (1 - Math.pow(1 - k, 3)), k === 0); if (k < 1) glideRaf = requestAnimationFrame(go); }; glideRaf = requestAnimationFrame(go); if (!playing) playNow(); }
+  xf.addEventListener('input', () => setMix(xf.value / 100, true));
+  $('#segA').addEventListener('click', () => glide(1)); $('#segB').addEventListener('click', () => glide(0));
   function seek(p) { p = Math.max(0, Math.min(dur() - .05, p)); if (playing) { halt(); start(p); } else offset = p; }
   wave.addEventListener('click', async e => { const r = wave.getBoundingClientRect(), k = (e.clientX - r.left) / r.width; if (!T0()) { await load(trk); offset = k * dur(); playNow(); } else seek(k * dur()); });
   wave.addEventListener('keydown', e => { if (e.key === 'ArrowRight') seek(cur() + 5); if (e.key === 'ArrowLeft') seek(cur() - 5); });
-  // wybór numeru
-  const tabs = $('#tracks');
-  TRACKS.forEach((T, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'trk'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', i === trk);
-    b.innerHTML = `<small>Numer ${i + 1}</small><b>${T.title}</b>`;
-    b.addEventListener('click', () => pickTrack(i)); tabs.appendChild(b); });
+  // wybór numeru: płyty na obrotowej karuzeli (przeciągnij, stuknij albo strzałki)
+  const ring = $('#ring'), ringWrap = $('#ringwrap'), deck = $('#deck'), N_T = TRACKS.length, LABELS = ['#ff2d91', '#c9c8c3', '#7a5cff'];
+  let pos = 0;
+  const discs = TRACKS.map((T, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'disc'; b.setAttribute('aria-label', `Numer ${i + 1}: ${T.title}`);
+    b.style.setProperty('--lab', LABELS[i % LABELS.length]); b.innerHTML = `<span class="vin"><span>${T.title}</span></span>`; ring.appendChild(b); return b; });
+  const wrapO = o => { while (o > N_T / 2) o -= N_T; while (o < -N_T / 2) o += N_T; return o; };
+  // płyty w perspektywie: wybrana na środku, sąsiednie obrócone na boki
+  function setPos(p, snap) { pos = p; ring.classList.toggle('snap', !!snap); const gap = Math.min(ringWrap.clientWidth * .36, 220);
+    discs.forEach((d, i) => { const o = wrapO(i - p), ao = Math.abs(o);
+      d.style.transform = `translateX(${(o * gap).toFixed(1)}px) translateZ(${(-ao * 120).toFixed(1)}px) rotateY(${(-o * 48).toFixed(1)}deg) scale(${(1 - Math.min(ao, 1.2) * .12).toFixed(3)})`;
+      d.style.zIndex = String(100 - Math.round(ao * 10)); d.style.opacity = String(Math.max(0, 1 - Math.max(0, ao - 1) * 1.6)); }); }
+  setPos(0); addEventListener('resize', () => setPos(pos));
+  function showTitle(i) { $('#dnum').textContent = `Numer ${i + 1} / ${N_T}`; $('#dtitle').textContent = TRACKS[i].title; const t = $('.deck-title'); t.classList.remove('swap'); void t.offsetWidth; t.classList.add('swap');
+    discs.forEach((d, k) => d.classList.toggle('cur', k === i)); }
+  showTitle(0);
+  function goTo(i) { const target = ((i % N_T) + N_T) % N_T; let want = pos + wrapO(target - pos); setPos(want, true); pickTrack(target); }
+  $('#dprev').addEventListener('click', () => goTo(trk - 1)); $('#dnext').addEventListener('click', () => goTo(trk + 1));
+  let dragX = null, dragPos = 0, moved = 0, lastDx = 0;
+  ringWrap.addEventListener('pointerdown', e => { dragX = e.clientX; dragPos = pos; moved = 0; lastDx = 0; ringWrap.classList.add('drag'); ring.classList.remove('snap'); try { ringWrap.setPointerCapture(e.pointerId); } catch (_) {} });
+  ringWrap.addEventListener('pointermove', e => { if (dragX === null) return; const dx = e.clientX - dragX; lastDx = dx; moved = Math.max(moved, Math.abs(dx)); setPos(dragPos - dx / Math.min(ringWrap.clientWidth * .36, 220)); });
+  const endDrag = e => { if (dragX === null) return; ringWrap.classList.remove('drag'); dragX = null;
+    if (moved < 6) { const hit = document.elementFromPoint(e.clientX, e.clientY); const d = hit && hit.closest('.disc'); if (d) { goTo(discs.indexOf(d)); return; } setPos(pos, true); return; }
+    let t = Math.round(pos); if (((t % N_T) + N_T) % N_T === trk && Math.abs(lastDx) > 30) t = Math.round(dragPos) + (lastDx < 0 ? 1 : -1); goTo(t); };
+  ringWrap.addEventListener('pointerup', endDrag); ringWrap.addEventListener('pointercancel', endDrag);
+  ringWrap.setAttribute('tabindex', '0'); ringWrap.addEventListener('keydown', e => { if (e.key === 'ArrowRight') goTo(trk + 1); if (e.key === 'ArrowLeft') goTo(trk - 1); });
   async function pickTrack(i) {
     if (i === trk) return; const was = playing; if (playing) { playing = false; halt(); setIcon(); }
-    trk = i; offset = 0; $$('.trk', tabs).forEach((b, j) => b.setAttribute('aria-selected', j === i));
+    trk = i; offset = 0; showTitle(i);
     if (!T0()) stateEl.textContent = 'Ładowanie…';
     await load(i); if (trk !== i) return;
     stateEl.textContent = T0() ? label() : 'Nie udało się wczytać nagrania';
@@ -202,11 +245,12 @@
   new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { o.disconnect(); load(0).then(() => { if (trk === 0 && T0()) { tdur.textContent = fmt(dur()); wave.setAttribute('aria-valuemax', Math.round(dur())); } }); } }, { rootMargin: '600px' }).observe($('#roznica'));
   function drawWave() {
     const r = wcv.getBoundingClientRect(), d = Math.min(2, devicePixelRatio || 1); if (wcv.width !== Math.round(r.width * d)) { wcv.width = r.width * d; wcv.height = r.height * d; }
-    const c = T0(), W = wcv.width, H = wcv.height, pk = c ? (abMode === 'A' ? c.pA : c.pB) : [], n = pk.length || 160, bw = W / n, pos = c ? cur() / c.dur : 0;
+    const c = T0(), W = wcv.width, H = wcv.height, pk = c ? (mix >= .5 ? c.pA : c.pB) : [], n = pk.length || 160, bw = W / n, pos = c ? cur() / c.dur : 0;
     wx.clearRect(0, 0, W, H);
     for (let i = 0; i < n; i++) {
       const v = pk.length ? pk[i] : .12 + .06 * Math.sin(i * .5), h = Math.max(2 * d, Math.min(1, v) * H * .92), played = i / n < pos;
-      wx.fillStyle = played ? (abMode === 'A' ? '#ff2d91' : '#c9c8c3') : (abMode === 'A' ? 'rgba(255,45,145,.28)' : 'rgba(201,200,195,.22)');
+      const cr = Math.round(201 + (255 - 201) * mix), cg = Math.round(200 + (45 - 200) * mix), cb = Math.round(195 + (145 - 195) * mix);
+      wx.fillStyle = played ? `rgb(${cr},${cg},${cb})` : `rgba(${cr},${cg},${cb},.26)`;
       wx.fillRect(i * bw + bw * .18, (H - h) / 2, bw * .64, h);
     }
     if (pk.length) { wx.fillStyle = '#fff'; wx.fillRect(pos * W - d, 0, 2 * d, H); }
@@ -215,7 +259,16 @@
   }
   requestAnimationFrame(drawWave);
 
+
+  /* ---------- logo 3D w nagłówku: 72 klatki obrotu, pełny obrót w 4 s ---------- */
+  // logo 3D w rogu: obrót z klatek
+  (() => { const els = $$('.logo3d'); if (!els.length || RM) return; const N = 72, COLS = 9, ROWS = 8, PERIOD = 4000;
+    const im = new Image(); im.onload = () => { els.forEach(el => el.classList.add('sprite')); requestAnimationFrame(step); }; im.src = 'assets/images/logo-3d-sprite.webp';
+    let last = -1;
+    function step(t) { const f = Math.floor((t % PERIOD) / PERIOD * N); if (f !== last) { last = f; const pos = `${(f % COLS) / (COLS - 1) * 100}% ${Math.floor(f / COLS) / (ROWS - 1) * 100}%`; els.forEach(el => el.style.backgroundPosition = pos); } requestAnimationFrame(step); }
+  })();
+
   /* ---------- kopiuj ---------- */
-  $$('.copy').forEach(b => b.addEventListener('click', () => { const okk = () => { b.textContent = 'Skopiowano'; setTimeout(() => b.textContent = 'Kopiuj', 1500); }, sel = () => getSelection().selectAllChildren(b.previousElementSibling);
+  $$('.copy[data-copy]').forEach(b => b.addEventListener('click', () => { const okk = () => { b.textContent = 'Skopiowano'; setTimeout(() => b.textContent = 'Kopiuj', 1500); }, sel = () => getSelection().selectAllChildren(b.previousElementSibling);
     navigator.clipboard ? navigator.clipboard.writeText(b.dataset.copy).then(okk).catch(sel) : sel(); }));
 })();
