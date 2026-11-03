@@ -156,6 +156,10 @@
     }, { threshold: .4 });
     io.observe(prices);
   }
+  // za każdym razem, gdy najedziesz na wiersz z ceną (na telefonie: stukniesz w niego), liczba kręci się od nowa
+  if (!RM) rows.forEach((row, i) => row.addEventListener('pointerenter', () => {
+    odos[i].set(false); void odos[i].p.offsetWidth; odos[i].set(true, 0);
+  }));
 
   /* ---------- przed / po: prawdziwe pliki, 3 numery ---------- */
   const TRACKS = [
