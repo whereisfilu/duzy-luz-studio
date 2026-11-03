@@ -1,7 +1,7 @@
 /* Duży Luz Studio — intro, licznik cen, odtwarzacz przed/po */
 (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const RM = false; // animacje działają zawsze, także gdy telefon ma włączone „Ogranicz ruch”
   const BEAT = 60 / 90;
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const curve = fn => { const c = new Float32Array(1024); for (let i = 0; i < 1024; i++) c[i] = fn(i / 511.5 - 1); return c; };
@@ -142,7 +142,7 @@
     p.innerHTML = h + unit; p.setAttribute('aria-label', txt + ' ' + p.querySelector('small').textContent);
     const cols = $$('.d', p), digits = txt.replace(/\D/g, '');
     const set = (anim, delay = 0) => cols.forEach((c, i) => { c.style.transition = anim ? `transform ${1.1 + i * .25}s cubic-bezier(.2,.8,.2,1) ${delay}s` : 'none'; c.style.transform = `translateY(-${(anim ? +digits[i] : 0) * 1.3}em)`; });
-    const final = () => cols.forEach((c, i) => { c.style.transition = 'none'; c.style.transform = `translateY(-${+digits[i]}em)`; });
+    const final = () => cols.forEach((c, i) => { c.style.transition = 'none'; c.style.transform = `translateY(-${+digits[i] * 1.3}em)`; });
     return { p, set, final };
   });
   odos.forEach(o => o.final());

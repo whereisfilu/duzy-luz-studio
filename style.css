@@ -254,7 +254,6 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; font-famil
   .xl { min-height: 44px; padding: 0 14px; font-size: .72rem; }
   .tap.ask .tap-txt { border-color: rgba(242,241,237,.7); font-size: .88rem; }
 }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } html { scroll-behavior: auto; } }
 
 /* link do mapy przy adresie */
 .maplink { color: inherit; border-bottom: 1px solid rgba(255,45,145,.5); transition: color .2s, border-color .2s; }
