@@ -157,6 +157,24 @@
     io.observe(prices);
   }
 
+  /* zakładki u góry: podświetlenie sekcji, w której aktualnie jesteś */
+  (() => {
+    const links = $$('.hdr nav a'), secs = links.map(a => document.querySelector(a.getAttribute('href')));
+    let tick = false;
+    const mark = () => {
+      tick = false; const line = ($('.hdr').offsetHeight || 0) + innerHeight * .25; let cur = -1;
+      secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= line) cur = i; });
+      if (scrollY + innerHeight >= document.documentElement.scrollHeight - 4) cur = secs.length - 1;
+      links.forEach((a, i) => i === cur ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+    };
+    addEventListener('scroll', () => { if (!tick) { tick = true; requestAnimationFrame(mark); } }, { passive: true });
+    addEventListener('resize', mark); mark();
+  })();
+  // za każdym razem, gdy najedziesz na wiersz z ceną (na telefonie: stukniesz w niego), liczba kręci się od nowa
+  if (!RM) rows.forEach((row, i) => row.addEventListener('pointerenter', () => {
+    odos[i].set(false); void odos[i].p.offsetWidth; odos[i].set(true, 0);
+  }));
+
   /* ---------- przed / po: prawdziwe pliki, 3 numery ---------- */
   const TRACKS = [
     { title: 'Piotr Pisarek', b: 'assets/audio/piotr-pisarek-przed.mp3', a: 'assets/audio/piotr-pisarek-po.mp3' },
@@ -208,10 +226,10 @@
   wave.addEventListener('click', async e => { const r = wave.getBoundingClientRect(), k = (e.clientX - r.left) / r.width; if (!T0()) { await load(trk); offset = k * dur(); playNow(); } else seek(k * dur()); });
   wave.addEventListener('keydown', e => { if (e.key === 'ArrowRight') seek(cur() + 5); if (e.key === 'ArrowLeft') seek(cur() - 5); });
   // wybór numeru: płyty na obrotowej karuzeli (przeciągnij, stuknij albo strzałki)
-  const ring = $('#ring'), ringWrap = $('#ringwrap'), deck = $('#deck'), N_T = TRACKS.length, LABELS = ['#ff2d91', '#c9c8c3', '#7a5cff'];
+  const ring = $('#ring'), ringWrap = $('#ringwrap'), deck = $('#deck'), N_T = TRACKS.length, LABELS = ['#ff2d91', '#ff86bf', '#7a5cff'];
   let pos = 0;
   const discs = TRACKS.map((T, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'disc'; b.setAttribute('aria-label', `Numer ${i + 1}: ${T.title}`);
-    b.style.setProperty('--lab', LABELS[i % LABELS.length]); b.innerHTML = `<span class="vin"><span>${T.title}</span></span>`; ring.appendChild(b); return b; });
+    b.style.setProperty('--lab', LABELS[i % LABELS.length]); b.innerHTML = '<span class="nota" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M9 6.2l10-2v3.4l-10 2z" fill="currentColor"/><path d="M9.2 8.6v9M19.2 6v9" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="6.8" cy="17.8" rx="3" ry="2.35" transform="rotate(-20 6.8 17.8)" fill="currentColor"/><ellipse cx="16.8" cy="15.2" rx="3" ry="2.35" transform="rotate(-20 16.8 15.2)" fill="currentColor"/></svg></span>'; ring.appendChild(b); return b; });
   const wrapO = o => { while (o > N_T / 2) o -= N_T; while (o < -N_T / 2) o += N_T; return o; };
   // płyty w perspektywie: wybrana na środku, sąsiednie obrócone na boki
   function setPos(p, snap) { pos = p; ring.classList.toggle('snap', !!snap); const gap = Math.min(ringWrap.clientWidth * .36, 220);
