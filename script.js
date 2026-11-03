@@ -156,6 +156,20 @@
     }, { threshold: .4 });
     io.observe(prices);
   }
+
+  /* zakładki u góry: podświetlenie sekcji, w której aktualnie jesteś */
+  (() => {
+    const links = $$('.hdr nav a'), secs = links.map(a => document.querySelector(a.getAttribute('href')));
+    let tick = false;
+    const mark = () => {
+      tick = false; const line = ($('.hdr').offsetHeight || 0) + innerHeight * .25; let cur = -1;
+      secs.forEach((s, i) => { if (s && s.getBoundingClientRect().top <= line) cur = i; });
+      if (scrollY + innerHeight >= document.documentElement.scrollHeight - 4) cur = secs.length - 1;
+      links.forEach((a, i) => i === cur ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'));
+    };
+    addEventListener('scroll', () => { if (!tick) { tick = true; requestAnimationFrame(mark); } }, { passive: true });
+    addEventListener('resize', mark); mark();
+  })();
   // za każdym razem, gdy najedziesz na wiersz z ceną (na telefonie: stukniesz w niego), liczba kręci się od nowa
   if (!RM) rows.forEach((row, i) => row.addEventListener('pointerenter', () => {
     odos[i].set(false); void odos[i].p.offsetWidth; odos[i].set(true, 0);
