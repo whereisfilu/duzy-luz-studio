@@ -96,7 +96,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 @keyframes askpulse { 50% { border-color: var(--rec); box-shadow: 0 0 22px rgba(255,45,145,.35); } }
 
 /* ---------- NAGŁÓWEK ---------- */
-.hdr { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; z-index: 50; background: var(--ink); border-bottom: 1px solid var(--line); }
+/* pasek półprzezroczysty: widać zdjęcie pod spodem, a dolna krawędź jest pełnym, jasnym różem */
+.hdr { position: fixed; top: env(safe-area-inset-top, 0px); left: 0; right: 0; z-index: 50; background: rgba(7,7,8,.5); border-bottom: 2px solid var(--rec-soft); }
+.hdr .logo3d { filter: drop-shadow(0 2px 8px rgba(0,0,0,.55)); }
+.hdr nav a { text-shadow: 0 1px 6px rgba(0,0,0,.85); }
+/* delikatne rozmycie tylko na komputerze (na iPhonie powodowało migotanie, więc tam go nie ma) */
+@media (min-width: 861px) { .hdr { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); } }
 .hdr-in { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding-block: 10px; }
 .hdr .logo { display: block; }
 /* logo 3D: wyrenderowany obrót bryły (72 klatki), kręci się w lewo */
@@ -211,7 +216,8 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; font-famil
 
 /* ---------- TELEFON ---------- */
 @media (max-width: 860px) {
-  section[id] { scroll-margin-top: 104px; }
+  section[id] { scroll-margin-top: 108px; }
+  .hdr { background: rgba(7,7,8,.8); }
   .hdr-in { grid-template-columns: auto 1fr; row-gap: 2px; padding-block: 6px 0; }
   .logo3d { height: 52px; }
   .hdr .btn { justify-self: end; min-height: 42px; padding: 0 16px; }
