@@ -260,3 +260,7 @@ footer { border-top: 1px solid var(--line); padding-block: 24px 40px; font-famil
 a.copy { display: inline-flex; align-items: center; text-decoration: none; }
 a.copy:hover { color: #fff; border-color: var(--rec); }
 .cl strong a { color: inherit; }
+/* dwa numery w jednym wierszu, rozdzielone ukośnikiem */
+.cl .tels { white-space: nowrap; overflow-wrap: normal; }
+.cl .tels i { font-style: normal; color: var(--rec); margin-inline: .5em; font-weight: 400; }
+@media (max-width: 400px) { .cl .tels { font-size: 1rem; } .cl .tels i { margin-inline: .35em; } }
