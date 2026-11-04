@@ -8,10 +8,10 @@
   const SAT = curve(x => Math.tanh(x * 2.4)), DIST = curve(x => Math.tanh(x * 7));
 
   /* ---------- dźwięk ---------- */
-  let ac, out, noise;
+  let ac, out, noise, lp;
   function initAudio() {
     if (ac) return; ac = new (window.AudioContext || window.webkitAudioContext)();
-    out = ac.createGain(); out.gain.value = .6; const comp = ac.createDynamicsCompressor(); out.connect(comp); comp.connect(ac.destination);
+    out = ac.createGain(); out.gain.value = .6; const comp = ac.createDynamicsCompressor(); lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 22000; out.connect(lp); lp.connect(comp); comp.connect(ac.destination);
     noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   }
   const ready = () => ac && ac.state === 'running';
@@ -109,15 +109,20 @@
     return introBuf;
   }
   const THUNDER_EARLY = .09; // grzmot wchodzi trochę przed uderzeniem (s)
-  // flash bang (razem z piorunem): huk i wysoki pisk w uszach
+  // flash bang jak w CS: huk, pisk w uszach i przytłumiony dźwięk, który wraca powoli
   function flashBang() {
     if (!ready()) return; const t = ac.currentTime;
-    const n = ac.createBufferSource(), hp = ac.createBiquadFilter(), g = ac.createGain(); n.buffer = noise; n.loop = true; hp.type = 'highpass'; hp.frequency.value = 600;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.55, t + .002); g.gain.exponentialRampToValueAtTime(.001, t + .5); n.connect(hp); hp.connect(g); g.connect(ac.destination); n.start(t); n.stop(t + .55);
-    const o = ac.createOscillator(), og = ac.createGain(), sh = ac.createWaveShaper(); sh.curve = SAT; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + .3);
-    og.gain.setValueAtTime(.6, t); og.gain.exponentialRampToValueAtTime(.001, t + .6); o.connect(og); og.connect(sh); sh.connect(ac.destination); o.start(t); o.stop(t + .65);
-    [3150, 4200].forEach((hz, i) => { const r = ac.createOscillator(), rg = ac.createGain(); r.type = 'sine'; r.frequency.value = hz;
-      rg.gain.setValueAtTime(0, t + .05); rg.gain.linearRampToValueAtTime(.05 - i * .02, t + .12); rg.gain.setValueAtTime(.05 - i * .02, t + .9); rg.gain.exponentialRampToValueAtTime(.0005, t + 2.6); r.connect(rg); rg.connect(ac.destination); r.start(t + .05); r.stop(t + 2.7); });
+    // przytłumienie reszty dźwięku (zaczyna się tuż po huku, żeby trzask pioruna przebił)
+    lp.frequency.cancelScheduledValues(t); lp.frequency.setValueAtTime(22000, t + .1); lp.frequency.exponentialRampToValueAtTime(380, t + .22); lp.frequency.setValueAtTime(380, t + 1.4); lp.frequency.exponentialRampToValueAtTime(22000, t + 4.6);
+    out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value, t + .1); out.gain.linearRampToValueAtTime(.35, t + .25); out.gain.setValueAtTime(.35, t + 1.4); out.gain.linearRampToValueAtTime(.6, t + 4.6);
+    // huk: szeroki trzask + niski cios
+    const n = ac.createBufferSource(), hp = ac.createBiquadFilter(), g = ac.createGain(); n.buffer = noise; n.loop = true; hp.type = 'highpass'; hp.frequency.value = 500;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.7, t + .002); g.gain.exponentialRampToValueAtTime(.001, t + .45); n.connect(hp); hp.connect(g); g.connect(ac.destination); n.start(t); n.stop(t + .5);
+    const o = ac.createOscillator(), og = ac.createGain(), sh = ac.createWaveShaper(); sh.curve = SAT; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(38, t + .3);
+    og.gain.setValueAtTime(.7, t); og.gain.exponentialRampToValueAtTime(.001, t + .7); o.connect(og); og.connect(sh); sh.connect(ac.destination); o.start(t); o.stop(t + .75);
+    // pisk w uszach: wysoki, lekko falujący, wolno cichnie
+    [[5200, .075], [5236, .06], [7800, .02]].forEach(([hz, v]) => { const r = ac.createOscillator(), rg = ac.createGain(); r.type = 'sine'; r.frequency.value = hz;
+      rg.gain.setValueAtTime(0, t + .06); rg.gain.linearRampToValueAtTime(v, t + .16); rg.gain.setValueAtTime(v, t + 1.5); rg.gain.exponentialRampToValueAtTime(.0004, t + 5); r.connect(rg); rg.connect(ac.destination); r.start(t + .06); r.stop(t + 5.1); });
   }
   // grzmot na 4. uderzeniu (wejście napisu „Duży Luz”)
   const thunderData = fetch('assets/audio/grzmot.mp3').then(r => r.arrayBuffer()).catch(() => null);
@@ -157,7 +162,7 @@
     words.forEach(w => w.classList.add('in')); shake();
     await wait(RM ? 300 : 1400);
     gate.classList.add('gone'); document.body.classList.remove('locked');
-    setTimeout(() => fl.classList.remove('bang'), 3300);
+    setTimeout(() => fl.classList.remove('bang'), 4500);
     running = false;
   }
   tap.addEventListener('click', () => { initAudio(); ac.resume().finally(() => intro()); });
