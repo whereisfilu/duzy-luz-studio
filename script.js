@@ -108,6 +108,18 @@
     const d = introBuf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < .02) i++; introBuf.lead = i / introBuf.sampleRate;
     return introBuf;
   }
+  const THUNDER_EARLY = .09; // grzmot wchodzi trochę przed uderzeniem (s)
+  // flash bang: huk, wysoki pisk w uszach i na chwilę przytłumiony dźwięk
+  function flashBang() {
+    if (!ready()) return; const t = ac.currentTime;
+    out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value, t); out.gain.linearRampToValueAtTime(.25, t + .03); out.gain.setTargetAtTime(.6, t + .9, .6);
+    const n = ac.createBufferSource(), hp = ac.createBiquadFilter(), g = ac.createGain(); n.buffer = noise; n.loop = true; hp.type = 'highpass'; hp.frequency.value = 600;
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1, t + .002); g.gain.exponentialRampToValueAtTime(.001, t + .5); n.connect(hp); hp.connect(g); g.connect(ac.destination); n.start(t); n.stop(t + .55);
+    const o = ac.createOscillator(), og = ac.createGain(), sh = ac.createWaveShaper(); sh.curve = SAT; o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + .3);
+    og.gain.setValueAtTime(.9, t); og.gain.exponentialRampToValueAtTime(.001, t + .6); o.connect(og); og.connect(sh); sh.connect(ac.destination); o.start(t); o.stop(t + .65);
+    [3150, 4200].forEach((hz, i) => { const r = ac.createOscillator(), rg = ac.createGain(); r.type = 'sine'; r.frequency.value = hz;
+      rg.gain.setValueAtTime(0, t + .05); rg.gain.linearRampToValueAtTime(.05 - i * .02, t + .12); rg.gain.setValueAtTime(.05 - i * .02, t + .9); rg.gain.exponentialRampToValueAtTime(.0005, t + 2.6); r.connect(rg); rg.connect(ac.destination); r.start(t + .05); r.stop(t + 2.7); });
+  }
   // grzmot na 4. uderzeniu (wejście napisu „Duży Luz”)
   const thunderData = fetch('assets/audio/grzmot.mp3').then(r => r.arrayBuffer()).catch(() => null);
   let thunderBuf = null;
@@ -127,7 +139,7 @@
     if (thunder && ac.state === 'running') {
       // grzmot równo z 4. uderzeniem
       const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = thunder; g.gain.value = .85; src.connect(g); g.connect(out);
-      src.start(at + (buf ? buf.lead : 0) + INTRO_HITS[3] - thunder.lead);
+      src.start(Math.max(at, at + (buf ? buf.lead : 0) + INTRO_HITS[3] - thunder.lead - THUNDER_EARLY));
     }
     const until = s => wait(Math.max(0, t0 + s * 1000 - performance.now()));
     if (!RM) for (let i = 0; i < 3; i++) {
@@ -141,8 +153,12 @@
     await until(RM ? 0 : INTRO_HITS[3]);
     cutTo(3); cnt.classList.remove('slam'); cnt.textContent = '';
     words.forEach(w => w.classList.add('in')); fx($('#flash')); shake();
-    await wait(RM ? 300 : 1400);
-    gate.classList.add('gone'); document.body.classList.remove('locked');
+    await wait(RM ? 300 : 1150);
+    // flash bang: biały błysk zakrywa wejście, strona wyłania się spod niego
+    const fl = $('#flash'); fl.classList.remove('go', 'bang'); void fl.offsetWidth; fl.classList.add('bang'); flashBang();
+    await wait(RM ? 0 : 120);
+    gate.style.transition = 'none'; gate.classList.add('gone'); document.body.classList.remove('locked');
+    setTimeout(() => fl.classList.remove('bang'), 2300);
     running = false;
   }
   tap.addEventListener('click', () => { initAudio(); ac.resume().finally(() => intro()); });
