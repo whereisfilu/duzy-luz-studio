@@ -108,12 +108,27 @@
     const d = introBuf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < .02) i++; introBuf.lead = i / introBuf.sampleRate;
     return introBuf;
   }
+  // grzmot na 4. uderzeniu (wejście napisu „Duży Luz”)
+  const thunderData = fetch('assets/audio/grzmot.mp3').then(r => r.arrayBuffer()).catch(() => null);
+  let thunderBuf = null;
+  async function getThunderBuf() {
+    if (thunderBuf) return thunderBuf; const data = await thunderData; if (!data) return null;
+    try { thunderBuf = await new Promise((res, rej) => ac.decodeAudioData(data.slice(0), res, rej)); } catch (_) { return null; }
+    const d = thunderBuf.getChannelData(0); let i = 0; while (i < d.length && Math.abs(d[i]) < .02) i++; thunderBuf.lead = i / thunderBuf.sampleRate;
+    return thunderBuf;
+  }
   async function intro() {
     if (running) return; running = true; tcOn = false;
     tap.classList.add('hide');
-    const buf = ac ? await getIntroBuf() : null;
+    const buf = ac ? await getIntroBuf() : null, thunder = ac ? await getThunderBuf() : null;
     let t0 = performance.now() + 60;
-    if (buf && ac.state === 'running') { const src = ac.createBufferSource(); src.buffer = buf; src.connect(out); const at = ac.currentTime + .06; src.start(at); t0 = performance.now() + 60 + buf.lead * 1000; }
+    const at = ac ? ac.currentTime + .06 : 0;
+    if (buf && ac.state === 'running') { const src = ac.createBufferSource(); src.buffer = buf; src.connect(out); src.start(at); t0 = performance.now() + 60 + buf.lead * 1000; }
+    if (thunder && ac.state === 'running') {
+      // grzmot równo z 4. uderzeniem
+      const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = thunder; g.gain.value = .85; src.connect(g); g.connect(out);
+      src.start(at + (buf ? buf.lead : 0) + INTRO_HITS[3] - thunder.lead);
+    }
     const until = s => wait(Math.max(0, t0 + s * 1000 - performance.now()));
     if (!RM) for (let i = 0; i < 3; i++) {
       // uderzenia 1, 2, 3: zdjęcie + cyfra
@@ -122,7 +137,7 @@
       if (i % 2 === 0) fx($('#flash'));
       shake();
     }
-    // uderzenie 4: chromowane logo 3D (bez dodatkowych dźwięków)
+    // uderzenie 4: chromowane logo 3D + grzmot
     await until(RM ? 0 : INTRO_HITS[3]);
     cutTo(3); cnt.classList.remove('slam'); cnt.textContent = '';
     words.forEach(w => w.classList.add('in')); fx($('#flash')); shake();
