@@ -8,10 +8,10 @@
   const SAT = curve(x => Math.tanh(x * 2.4)), DIST = curve(x => Math.tanh(x * 7));
 
   /* ---------- dźwięk ---------- */
-  let ac, out, noise, lp;
+  let ac, out, noise;
   function initAudio() {
     if (ac) return; ac = new (window.AudioContext || window.webkitAudioContext)();
-    out = ac.createGain(); out.gain.value = .6; const comp = ac.createDynamicsCompressor(); lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 22000; out.connect(lp); lp.connect(comp); comp.connect(ac.destination);
+    out = ac.createGain(); out.gain.value = .6; const comp = ac.createDynamicsCompressor(); out.connect(comp); comp.connect(ac.destination);
     noise = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate); const d = noise.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
   }
   const ready = () => ac && ac.state === 'running';
@@ -109,20 +109,29 @@
     return introBuf;
   }
   const THUNDER_EARLY = .09; // grzmot wchodzi trochę przed uderzeniem (s)
-  // flash bang jak w CS: huk, pisk w uszach i przytłumiony dźwięk, który wraca powoli
-  function flashBang() {
-    if (!ready()) return; const t = ac.currentTime;
-    // przytłumienie reszty dźwięku (zaczyna się tuż po huku, żeby trzask pioruna przebił)
-    lp.frequency.cancelScheduledValues(t); lp.frequency.setValueAtTime(22000, t + .1); lp.frequency.exponentialRampToValueAtTime(380, t + .22); lp.frequency.setValueAtTime(380, t + 1.4); lp.frequency.exponentialRampToValueAtTime(22000, t + 4.6);
-    out.gain.cancelScheduledValues(t); out.gain.setValueAtTime(out.gain.value, t + .1); out.gain.linearRampToValueAtTime(.35, t + .25); out.gain.setValueAtTime(.35, t + 1.4); out.gain.linearRampToValueAtTime(.6, t + 4.6);
-    // huk: szeroki trzask + niski cios
-    const n = ac.createBufferSource(), hp = ac.createBiquadFilter(), g = ac.createGain(); n.buffer = noise; n.loop = true; hp.type = 'highpass'; hp.frequency.value = 500;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.7, t + .002); g.gain.exponentialRampToValueAtTime(.001, t + .45); n.connect(hp); hp.connect(g); g.connect(ac.destination); n.start(t); n.stop(t + .5);
-    const o = ac.createOscillator(), og = ac.createGain(), sh = ac.createWaveShaper(); sh.curve = SAT; o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(38, t + .3);
-    og.gain.setValueAtTime(.7, t); og.gain.exponentialRampToValueAtTime(.001, t + .7); o.connect(og); og.connect(sh); sh.connect(ac.destination); o.start(t); o.stop(t + .75);
-    // pisk w uszach: wysoki, lekko falujący, wolno cichnie
-    [[5200, .075], [5236, .06], [7800, .02]].forEach(([hz, v]) => { const r = ac.createOscillator(), rg = ac.createGain(); r.type = 'sine'; r.frequency.value = hz;
-      rg.gain.setValueAtTime(0, t + .06); rg.gain.linearRampToValueAtTime(v, t + .16); rg.gain.setValueAtTime(v, t + 1.5); rg.gain.exponentialRampToValueAtTime(.0004, t + 5); r.connect(rg); rg.connect(ac.destination); r.start(t + .06); r.stop(t + 5.1); });
+  // piorun: rozmyte błyskawice na canvasie + migotliwy błysk całego ekranu
+  const boltCv = document.createElement('canvas'); boltCv.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:102;pointer-events:none;opacity:0;filter:blur(1.2px)'; document.body.appendChild(boltCv);
+  function bolt(c, x0, y0, x1, y1, d, w, depth) {
+    // łamana linia (podział środka z losowym wychyleniem) + odnogi
+    const pts = [[x0, y0], [x1, y1]];
+    for (let k = 0; k < 6; k++) { for (let i = pts.length - 1; i > 0; i--) { const a = pts[i - 1], b = pts[i]; pts.splice(i, 0, [(a[0] + b[0]) / 2 + (Math.random() - .5) * d, (a[1] + b[1]) / 2 + (Math.random() - .5) * d * .5]); } d *= .55; }
+    c.lineWidth = w; c.beginPath(); pts.forEach((p, i) => i ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1])); c.stroke();
+    if (depth < 2) for (let i = 8; i < pts.length - 8; i += 9 + Math.floor(Math.random() * 14)) if (Math.random() < .7) {
+      const p = pts[i], dir = Math.random() < .5 ? -1 : 1, len = (y1 - y0) * (.12 + Math.random() * .22);
+      bolt(c, p[0], p[1], p[0] + dir * len * (.5 + Math.random() * .7), p[1] + len, d * 5, w * .55, depth + 1);
+    }
+  }
+  function lightning() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight; boltCv.width = W * dpr; boltCv.height = H * dpr;
+    const c = boltCv.getContext('2d'); c.scale(dpr, dpr); c.lineCap = 'round'; c.lineJoin = 'round';
+    const bolts = [[.5 + (Math.random() - .5) * .3, .92], [.2 + Math.random() * .15, .7], [.65 + Math.random() * .15, .75]];
+    // trzy przebiegi: szeroka poświata (fiolet), środkowa (niebieska), rdzeń (biały)
+    [[26, 'rgba(150,120,255,.35)', 28], [9, 'rgba(170,200,255,.7)', 12], [2.6, '#fff', 3]].forEach(([w, col, blur], pass) => {
+      c.strokeStyle = col; c.shadowColor = col; c.shadowBlur = blur * 2; c.save(); c.filter = pass === 0 ? 'blur(10px)' : pass === 1 ? 'blur(3px)' : 'none';
+      bolts.forEach(([fx, fy], i) => { const rx = fx * W; bolt(c, rx + (Math.random() - .5) * 40, -10, rx + (Math.random() - .5) * W * .25, fy * H, W * .35, w * (i ? .7 : 1), 0); });
+      c.restore();
+    });
+    boltCv.animate([{ opacity: 1 }, { opacity: .2, offset: .08 }, { opacity: 1, offset: .15 }, { opacity: .15, offset: .27 }, { opacity: .75, offset: .38 }, { opacity: 0 }], { duration: 1100, easing: 'linear' });
   }
   // grzmot na 4. uderzeniu (wejście napisu „Duży Luz”)
   const thunderData = fetch('assets/audio/grzmot.mp3').then(r => r.arrayBuffer()).catch(() => null);
@@ -153,16 +162,16 @@
       if (i % 2 === 0) fx($('#flash'));
       shake();
     }
-    // piorun: flash bang równo z grzmotem, chwilę później uderzenie 4 (napis)
+    // piorun: błysk i błyskawice równo z grzmotem, chwilę później uderzenie 4 (napis)
     await until(RM ? 0 : INTRO_HITS[3] - THUNDER_EARLY);
-    const fl = $('#flash'); fl.classList.remove('go', 'bang'); void fl.offsetWidth; fl.classList.add('bang'); flashBang();
+    const fl = $('#flash'); fl.classList.remove('go', 'bolt'); void fl.offsetWidth; fl.classList.add('bolt'); lightning();
     await until(RM ? 0 : INTRO_HITS[3]);
     // uderzenie 4: chromowane logo 3D + napis
     cutTo(3); cnt.classList.remove('slam'); cnt.textContent = '';
     words.forEach(w => w.classList.add('in')); shake();
     await wait(RM ? 300 : 1400);
     gate.classList.add('gone'); document.body.classList.remove('locked');
-    setTimeout(() => fl.classList.remove('bang'), 4500);
+    setTimeout(() => fl.classList.remove('bolt'), 1300);
     running = false;
   }
   tap.addEventListener('click', () => { initAudio(); ac.resume().finally(() => intro()); });
