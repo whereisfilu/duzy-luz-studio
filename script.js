@@ -244,7 +244,7 @@
   const ring = $('#ring'), ringWrap = $('#ringwrap'), deck = $('#deck'), N_T = TRACKS.length, LABELS = ['#ff2d91', '#ff86bf', '#7a5cff'];
   let pos = 0;
   const discs = TRACKS.map((T, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'disc'; b.setAttribute('aria-label', `Numer ${i + 1}: ${T.title}`);
-    b.style.setProperty('--lab', LABELS[i % LABELS.length]); b.innerHTML = '<span class="nota" aria-hidden="true"><span class="wv"><i style="--h:30%;--i:0"></i><i style="--h:62%;--i:1"></i><i style="--h:100%;--i:2"></i><i style="--h:48%;--i:3"></i><i style="--h:82%;--i:4"></i><i style="--h:40%;--i:5"></i><i style="--h:24%;--i:6"></i></span></span>'; ring.appendChild(b); return b; });
+    b.style.setProperty('--lab', LABELS[i % LABELS.length]); b.innerHTML = '<span class="nota" aria-hidden="true"><span class="wv"><i style="--h:34%;--d:3"></i><i style="--h:58%;--d:2"></i><i style="--h:82%;--d:1"></i><i style="--h:100%;--d:0"></i><i style="--h:82%;--d:1"></i><i style="--h:58%;--d:2"></i><i style="--h:34%;--d:3"></i></span></span>'; ring.appendChild(b); return b; });
   const wrapO = o => { while (o > N_T / 2) o -= N_T; while (o < -N_T / 2) o += N_T; return o; };
   // płyty w perspektywie: wybrana na środku, sąsiednie obrócone na boki
   function setPos(p, snap) { pos = p; ring.classList.toggle('snap', !!snap); const gap = Math.min(ringWrap.clientWidth * .36, 220);
